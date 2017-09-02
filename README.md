@@ -3,7 +3,7 @@
 
 skeleton
 ============
-A super simple foundation for building a scalable RESTful HTTP servers
+A super  simple foundation for building a scalable RESTful HTTP servers
 
 To build and run with docker:
 1. Run `./gradlew distTar` _this tells gradle to make a .tar file containing the java application code and all dependencies_
