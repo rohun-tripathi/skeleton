@@ -20,11 +20,21 @@ public class ReceiptDao {
     }
 
     public int insert(String merchantName, BigDecimal amount) {
-        ReceiptsRecord receiptsRecord = dsl
-                .insertInto(RECEIPTS, RECEIPTS.MERCHANT, RECEIPTS.AMOUNT)
-                .values(merchantName, amount)
-                .returning(RECEIPTS.ID)
-                .fetchOne();
+
+        ReceiptsRecord receiptsRecord;
+        if (amount == null) {
+            receiptsRecord = dsl
+                    .insertInto(RECEIPTS, RECEIPTS.MERCHANT)
+                    .values(merchantName)
+                    .returning(RECEIPTS.ID)
+                    .fetchOne();
+        } else {
+            receiptsRecord = dsl
+                    .insertInto(RECEIPTS, RECEIPTS.MERCHANT, RECEIPTS.AMOUNT)
+                    .values(merchantName, amount)
+                    .returning(RECEIPTS.ID)
+                    .fetchOne();
+        }
 
         checkState(receiptsRecord != null && receiptsRecord.getId() != null, "Insert failed");
 
