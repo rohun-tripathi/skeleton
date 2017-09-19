@@ -43,23 +43,48 @@
             margin-bottom: 5px;
         }
 
+        .trial {
+            background-color: #56A;
+            border: 1px solid #229;
+            width: 60px;
+            color: white;
+        }
+
     </style>
     <script>
-        // This is the idiomatic way to ensure that JQuery does not
-        // execute until the page has loaded
         const api = ""; // <- do not need a root api URL if this page is served directly by the API
-
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
 
         $(document).ready(function () {
 
             function attach_tags() {
                 var classname = document.getElementsByClassName("add-tag");
 
-                var myFunction = function() {
-                    alert("wtf?");
+                var myFunction = function () {
+                    console.log(this.parentNode);
+
+                    input_node = $('<input class="tag_input">Tag 1</input>')[0];
+
+                    this.parentNode.appendChild(input_node);
+
+                    input_node.addEventListener('keydown', function (event) {
+                        if (event.key === "Enter") {
+                            event.preventDefault();
+                            console.log(input_node.parentNode.id);
+                            if (input_node.value) {
+                                $.ajax({
+                                    url: api + "/tags/" + input_node.value,
+                                    type: "PUT", dataType: "text",
+                                    data: input_node.parentNode.id,
+                                    contentType: "application/json",
+                                    async: false,
+                                    complete: main(),
+                                });
+                                input_node.remove();
+                            } else {
+                                alert("wtf?")
+                            }
+                        }
+                    });
                 };
 
                 for (var i = 0; i < classname.length; i++) {
@@ -73,14 +98,20 @@
 
                 for (var i = 0; i < receipts.length; i++) {
                     var receipt = receipts[i];
-                    $(`<div class="receipt">
+
+                    var processed = $(`<div class="receipt" id=${receipt.id}>
                     Name : <span class="merchant">${receipt.merchantName}</span> <br>
                     Amount : <span class="amount">${receipt.value}</span> <br>
-                    Tags : <span class="tags">${receipt.tagsRecordList}</span> <br>
                     Time : ${receipt.value}
                     <div class="add-tag" data-id=${receipt.id}>Add Tag</div>
-                    </div>`).appendTo($("#receiptList"));
+                    <span class="trial" id=${receipt.id}/>
+                    </div>`);
 
+                    for (var j = 0; j < receipt.tagsRecordList.length; j++) {
+                        console.log($('.trial#' + receipt.id.toString()));
+                        $('.trial', $('.receipt')[j]).append('<div class="tagValue">' + receipt.tagsRecordList[j] + '</div>')
+                    }
+                    processed.appendTo($("#receiptList"));
                 }
                 attach_tags();
             }
@@ -96,11 +127,10 @@
 
             main();
 
-            p_test = document.getElementById("add-receipt");
+            p_test = document.getElementById("add_screen");
             p_test.style.display = "none";
 
-            plus_button = document.getElementById("plus_button");
-
+            plus_button = document.getElementById("add-receipt");
             plus_button.addEventListener("click", myFunction);
 
             function myFunction() {
@@ -129,16 +159,8 @@
                     type: "POST", dataType: "text",
                     data: JSON.stringify(data_load),
                     contentType: "application/json",
-                    async : false,
+                    async: false,
                     complete: main(),
-//                        function () {
-//                        $(`<div class="receipt">
-//                    Name : <span class="merchant">${document.getElementById("merchant").value}</span> <br>
-//                    Amount : <span class="amount">${document.getElementById("merchant").value}</span> <br>
-//                    Tags : <span class="tags">[]</span> <br>
-//                    Time : ${document.getElementById("merchant").value}
-//                    </div>`).appendTo($("#receiptList"));
-//                    },
                 })
             }
 
@@ -154,17 +176,22 @@
 <body>
 <DIV id="container">
 
-    <div id="add-receipt">
-        <div>MerchantName : <input id="merchant"/></div><br>
-        <div>Amount : <input id="amount" /></div>
-        <div class="button" id="save-receipt">Save</div><br><br>
-        <div class="button" id="cancel-receipt">Cancel</div><br><br><hr>
+    <div id="add_screen">
+        <div>Merchant-Name: <input id="merchant"/></div>
+        <br>
+        <div>Amount ($): <input id="amount"/></div>
+        <div class="button" id="save-receipt">Save</div>
+        <br><br>
+        <div class="button" id="cancel-receipt">Cancel</div>
+        <br><br>
+        <hr>
     </div>
 
     <h1>My receipts</h1>
-    <div class="button" id="plus_button">+</div>
-    <div id="receiptList">
-    </div>
+
+    <button class="button" id="add-receipt">New Receipt?</button>
+
+    <div id="receiptList"></div>
 </DIV>
 </body>
 

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import generated.tables.records.ReceiptsRecord;
 
 import java.math.BigDecimal;
+import java.sql.Time;
 import java.util.List;
 
 /**
@@ -30,10 +31,14 @@ public class ReceiptResponse {
     @JsonProperty
     List<String> tagsRecordList;
 
+    @JsonProperty
+    Time time;
+
     public ReceiptResponse(ReceiptsRecord dbRecord) {
         this.merchantName = dbRecord.getMerchant();
         this.id = dbRecord.getId();
         this.tagsRecordList = dbRecord.getTagList();
+        this.time = dbRecord.getUploaded();
 
         if (dbRecord.getAmount() != null) {
             this.value = dbRecord.getAmount();
