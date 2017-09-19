@@ -24,6 +24,15 @@
             text-align: center;
         }
 
+        .add-tag {
+            background-color: #56A;
+            border: 1px solid #229;
+            width: 60px;
+            float: right;
+            color: white;
+            float: left;
+        }
+
         #receiptList {
             border: 1px solid green;
             clear: both;
@@ -38,7 +47,7 @@
     <script>
         // This is the idiomatic way to ensure that JQuery does not
         // execute until the page has loaded
-        const api = "http://ec2-52-91-37-123.compute-1.amazonaws.com:8080"; // <- do not need a root api URL if this page is served directly by the API
+        const api = ""; // <- do not need a root api URL if this page is served directly by the API
 
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
@@ -46,28 +55,37 @@
 
         $(document).ready(function () {
 
+            function attach_tags() {
+                var classname = document.getElementsByClassName("add-tag");
+
+                var myFunction = function() {
+                    alert("wtf?");
+                };
+
+                for (var i = 0; i < classname.length; i++) {
+                    classname[i].addEventListener('click', myFunction, false);
+                }
+            }
+
             function refresh_receipt(receipts) {
 
-                $("#receiptList").innerHTML = "";
+                document.getElementById("receiptList").innerHTML = "";
 
                 for (var i = 0; i < receipts.length; i++) {
                     var receipt = receipts[i];
                     $(`<div class="receipt">
                     Name : <span class="merchant">${receipt.merchantName}</span> <br>
                     Amount : <span class="amount">${receipt.value}</span> <br>
-                    Tags : <span class="tags">${receipt.value}</span> <br>
+                    Tags : <span class="tags">${receipt.tagsRecordList}</span> <br>
                     Time : ${receipt.value}
-                    </div>`)
-                        .appendTo($("#receiptList"));
+                    <div class="add-tag" data-id=${receipt.id}>Add Tag</div>
+                    </div>`).appendTo($("#receiptList"));
+
                 }
+                attach_tags();
             }
 
             function main() {
-                var millisecondsToWait = 500;
-                setTimeout(function() {
-                    console.log("waited")
-                }, millisecondsToWait);
-
                 $.ajax({
                     url: api + "/receipts",
                     success: function (data) {
@@ -78,7 +96,7 @@
 
             main();
 
-            p_test = document.getElementById("lets_do_this");
+            p_test = document.getElementById("add-receipt");
             p_test.style.display = "none";
 
             plus_button = document.getElementById("plus_button");
@@ -89,24 +107,38 @@
                 p_test.style.display = "initial";
             }
 
-            call_test = document.getElementById("make_call");
+            call_test = document.getElementById("save-receipt");
             call_test.addEventListener("click", myFunction2);
 
-            call_test = document.getElementById("cancel_call");
+            call_test = document.getElementById("cancel-receipt");
             call_test.addEventListener("click", cancel_function);
 
             function myFunction2() {
+                if (document.getElementById("amount").value) {
+                    data_load = {
+                        merchant: document.getElementById("merchant").value,
+                        amount: document.getElementById("amount").value
+                    };
+                } else {
+                    data_load = {
+                        merchant: document.getElementById("merchant").value,
+                    };
+                }
                 $.ajax({
                     url: api + "/receipts",
                     type: "POST", dataType: "text",
-                    data: JSON.stringify({
-                        merchant: document.getElementById("merchant").value,
-                        amount: document.getElementById("amount").value
-                    }),
+                    data: JSON.stringify(data_load),
                     contentType: "application/json",
                     async : false,
                     complete: main(),
-                    timeout : 2000
+//                        function () {
+//                        $(`<div class="receipt">
+//                    Name : <span class="merchant">${document.getElementById("merchant").value}</span> <br>
+//                    Amount : <span class="amount">${document.getElementById("merchant").value}</span> <br>
+//                    Tags : <span class="tags">[]</span> <br>
+//                    Time : ${document.getElementById("merchant").value}
+//                    </div>`).appendTo($("#receiptList"));
+//                    },
                 })
             }
 
@@ -122,11 +154,11 @@
 <body>
 <DIV id="container">
 
-    <div id="lets_do_this">
+    <div id="add-receipt">
         <div>MerchantName : <input id="merchant"/></div><br>
         <div>Amount : <input id="amount" /></div>
-        <div class="button" id="make_call">Save</div><br><br>
-        <div class="button" id="cancel_call">Cancel</div><br><br><hr>
+        <div class="button" id="save-receipt">Save</div><br><br>
+        <div class="button" id="cancel-receipt">Cancel</div><br><br><hr>
     </div>
 
     <h1>My receipts</h1>
