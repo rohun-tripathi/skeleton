@@ -8,6 +8,8 @@ import generated.tables.Receipts;
 
 import java.math.BigDecimal;
 import java.sql.Time;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.annotation.Generated;
 
@@ -32,6 +34,16 @@ import org.jooq.impl.UpdatableRecordImpl;
 public class ReceiptsRecord extends UpdatableRecordImpl<ReceiptsRecord> implements Record5<Integer, Time, String, BigDecimal, Integer> {
 
 	private static final long serialVersionUID = -1941296675;
+
+	private transient List<String> tagList = new ArrayList<>();
+
+	public List<String> getTagList() {
+		return tagList;
+	}
+
+	public void setTagList(List<String> tagList) {
+		this.tagList = tagList;
+	}
 
 	/**
 	 * Setter for <code>public.receipts.id</code>.

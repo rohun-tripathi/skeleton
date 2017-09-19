@@ -1,16 +1,18 @@
 package dao;
 
-import api.ReceiptResponse;
 import generated.tables.records.ReceiptsRecord;
+import generated.tables.records.TagsRecord;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 import static generated.Tables.RECEIPTS;
+import static generated.Tables.TAGS;
 
 public class ReceiptDao {
     DSLContext dsl;
@@ -42,6 +44,33 @@ public class ReceiptDao {
     }
 
     public List<ReceiptsRecord> getAllReceipts() {
-        return dsl.selectFrom(RECEIPTS).fetch();
+        List<ReceiptsRecord> receiptResponseList = dsl.selectFrom(RECEIPTS).fetch();
+
+        if (receiptResponseList == null || receiptResponseList.size() < 1) {
+            System.out.println("did not find any receipts");
+            return new ArrayList<>();
+
+        } else {
+
+            List<TagsRecord> tagsRecordList = dsl.selectFrom(TAGS).fetch();
+
+            if (tagsRecordList == null || tagsRecordList.size() < 1) {
+                System.out.println("did not find any tags");
+                return receiptResponseList;
+            }
+
+            for (TagsRecord record : tagsRecordList) {
+
+                Integer receipt_id = record.getReceiptId();
+                for (ReceiptsRecord receiptsRecord : receiptResponseList) {
+                    if (receiptsRecord.getId().equals(receipt_id)) {
+                        receiptsRecord.getTagList().add(record.getName());
+                        break;
+                    }
+                }
+            }
+
+            return receiptResponseList;
+        }
     }
 }
