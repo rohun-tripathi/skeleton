@@ -58,6 +58,8 @@
         // execute until the page has loaded
         const api = ""; // <- do not need a root api URL if this page is served directly by the API
 
+        var receipt_data = [];
+
         function remove_tag(element) {
             $.ajax({
                 url: api + "/tags/" + element.value,
@@ -65,8 +67,14 @@
                 data: element.parentNode.id,
                 contentType: "application/json",
                 async: false,
-                complete: main()
+                complete: function(data) {
+                    element.remove()
+                }
             });
+        }
+
+        function add_tag_to_receipt(tagName, receipt_id) {
+            $('.trial', $('.receipt')[receipt_id - 1]).append(`<button class="tagValue" onclick="remove_tag(this)" value=` + tagName + `>` + tagName+`</button>`)
         }
 
         function attach_tags() {
@@ -90,7 +98,9 @@
                                 data: input_node.parentNode.id,
                                 contentType: "application/json",
                                 async: false,
-                                complete: main(),
+                                complete: function (data) {
+                                    add_tag_to_receipt(input_node.value, input_node.parentNode.id);
+                                },
                             });
                             input_node.remove();
                         } else {
@@ -115,7 +125,7 @@
                 var processed = $(`<div class="receipt" id=${receipt.id}>
                     Name : <span class="merchant">${receipt.merchantName}</span> <br>
                     Amount : <span class="amount">${receipt.value}</span> <br>
-                    Time : ${receipt.value}
+                    Time : ${receipt.time}
                     <span class="trial" id=${receipt.id}/>
                     <div class="add-tag" data-id=${receipt.id}>Add Tag</div>
                     </div>`);
@@ -133,6 +143,7 @@
             $.ajax({
                 url: api + "/receipts",
                 success: function (data) {
+                    receipt_data = data;
                     refresh_receipt(data);
                 }
             })
@@ -171,19 +182,20 @@
                 }
                 $.ajax({
                     url: api + "/receipts",
-                    type: "POST", dataType: "text",
+                    type: "POST",
                     data: JSON.stringify(data_load),
                     contentType: "application/json",
-                    async : false,
-                    complete: main(),
-//                        function () {
-//                        $(`<div class="receipt">
-//                    Name : <span class="merchant">${document.getElementById("merchant").value}</span> <br>
-//                    Amount : <span class="amount">${document.getElementById("merchant").value}</span> <br>
-//                    Tags : <span class="tags">[]</span> <br>
-//                    Time : ${document.getElementById("merchant").value}
-//                    </div>`).appendTo($("#receiptList"));
-//                    },
+                    complete: function(data) {
+                        const receipt = {};
+                        receipt.merchantName = data_load.merchant;
+                        receipt.value = data_load.amount;
+                        receipt.id = parseInt(data.responseJSON);
+                        receipt.time = (new Date()).toTimeString().split(' ')[0];
+                        receipt.tagsRecordList = [];
+
+                        receipt_data = receipt_data.concat(receipt);
+                        refresh_receipt(receipt_data)
+                    }
                 })
             }
 
