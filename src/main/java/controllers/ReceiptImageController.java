@@ -53,7 +53,7 @@ public class ReceiptImageController {
             BigDecimal amount = null;
 
             if (res.getTextAnnotationsList().size() < 1) {
-                merchantName = "Receipt Title Not Found - Try Again";
+                merchantName = "Try Again - No Receipt Found";
                 amount = new BigDecimal(0);
             } else {
 

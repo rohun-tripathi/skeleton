@@ -40,10 +40,12 @@
         #receiptList {
             border: 1px solid green;
             clear: both;
+        }
         video {
             width: 550px;
             height: 450px;
             border: 1px solid black;
+            align-self : center;
         }
 
         .receipt {
@@ -64,7 +66,8 @@
             float: left;
         }
 
-        #start, #snapshot {
+        #start-camera, #take-pic, #take-pic-cancel {
+            align-self : center;
             height: 3em;
         }
 
@@ -165,6 +168,26 @@
             })
         }
 
+        function display_save_receipt_box() {
+            document.getElementById("save_receipt_box").style.display = "initial";
+        }
+
+        function disableSnapshot() {
+            $('video').remove();
+
+            $('#take-pic').prop('disabled', true);
+            $('#take-pic-cancel').prop('disabled', true);
+        }
+
+        function refresh_video_area() {
+            $('video').on('play', (function(){
+                $('#take-pic').prop('disabled', false);
+                $('#take-pic-cancel').prop('disabled', false);
+            }));
+            $('#take-pic').on('click', takeSnapshot);
+            $('#take-pic-cancel').on('click', disableSnapshot);
+        }
+
         $(document).ready(function () {
 
             main();
@@ -173,11 +196,7 @@
             p_test.style.display = "none";
 
             plus_button = document.getElementById("add-receipt");
-            plus_button.addEventListener("click", myFunction);
-
-            function myFunction() {
-                p_test.style.display = "initial";
-            }
+            plus_button.addEventListener("click", display_save_receipt_box);
 
             call_test = document.getElementById("save-receipt");
             call_test.addEventListener("click", myFunction2);
@@ -201,7 +220,7 @@
                     type: "POST",
                     data: JSON.stringify(data_load),
                     contentType: "application/json",
-                    complete: function(data) {
+                    success: function(data) {
                         const receipt = {};
                         receipt.merchantName = data_load.merchant;
                         receipt.value = data_load.amount;
@@ -210,7 +229,8 @@
                         receipt.tagsRecordList = [];
 
                         receipt_data = receipt_data.concat(receipt);
-                        refresh_receipt(receipt_data)
+                        refresh_receipt(receipt_data);
+                        cancel_function();
                     }
                 })
             }
@@ -220,12 +240,19 @@
                 document.getElementById("amount").value = "";
                 p_test.style.display = "none"
             }
+
+            $('#start-camera').on('click', startVideo);
+            refresh_video_area();
+
+            console.log('asdf');
+
         });
 
         let imageCapture;
         let track;
 
         function attachMediaStream(mediaStream) {
+            console.log('attachMediaStream');
             $('video')[0].srcObject = mediaStream;
 
             // Saving the track allows us to capture a photo
@@ -234,6 +261,14 @@
         }
 
         function startVideo() {
+            console.log('startVideo');
+
+            $('video').remove();
+
+            $('#vidwrap').append(`<video autoplay></video>`);
+
+            refresh_video_area();
+
             navigator.mediaDevices.getUserMedia({video: {facingMode: {exact: "environment"}}})
                 .then(attachMediaStream)
                 .catch(error => {
@@ -246,6 +281,7 @@
         }
 
         function takeSnapshot() {
+            console.log('takeSnapshot');
             // create a CANVAS element that is same size as the image
             imageCapture.grabFrame()
                 .then(img => {
@@ -260,7 +296,17 @@
                         type: "POST",
                         data: base64EncodedImageData,
                         contentType: "text/plain",
-                        success: function() {},
+                        success: function (data) {
+
+                            console.log(data);
+                            console.log(data.merchantName);
+
+                            display_save_receipt_box();
+                            document.getElementById("merchant").value = data.merchantName;
+                            document.getElementById("amount").value = data.amount;
+
+                            disableSnapshot();
+                        },
                     })
                         .then(response => {
                             $('video').after(`<div>got response: <pre>${JSON.stringify(response)}</pre></div>`);
@@ -270,6 +316,7 @@
                     // For debugging, you can uncomment this to see the frame that was captured
                     // $('BODY').append(canvas);
                 });
+        }
     </script>
 </head>
 
@@ -289,11 +336,12 @@
     </div>
 </DIV>
 
-<button id="start">Start Video</button>
-<button id="snapshot" disabled="true">Take a Snapshot!</button>
+<button id="start-camera">Start Video</button>
+<button id="take-pic" disabled="true">Take a Snapshot!</button>
+<button id="take-pic-cancel" disabled="true">Cancel Snapshot!</button>
 <br>
 <div id="vidwrap">
-    <video autoplay></video>
+    <!--<video autoplay></video>-->
 </div>
 
 </body>
