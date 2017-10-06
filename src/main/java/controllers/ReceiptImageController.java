@@ -6,6 +6,8 @@ import com.google.protobuf.ByteString;
 import java.math.BigDecimal;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import org.hibernate.validator.constraints.NotEmpty;
@@ -41,6 +43,8 @@ public class ReceiptImageController {
         Image img = Image.newBuilder().setContent(ByteString.copyFrom(Base64.getDecoder().decode(base64EncodedImage))).build();
         AnnotateImageRequest request = this.requestBuilder.setImage(img).build();
 
+        Pattern regex = Pattern.compile("(\\d+\\.\\d+)");
+
         try (ImageAnnotatorClient client = ImageAnnotatorClient.create()) {
             BatchAnnotateImagesResponse responses = client.batchAnnotateImages(Collections.singletonList(request));
             AnnotateImageResponse res = responses.getResponses(0);
@@ -48,12 +52,29 @@ public class ReceiptImageController {
             String merchantName = null;
             BigDecimal amount = null;
 
-            // Your Algo Here!!
-            // Sort text annotations by bounding polygon.  Top-most non-decimal text is the merchant
-            // bottom-most decimal text is the total amount
-            for (EntityAnnotation annotation : res.getTextAnnotationsList()) {
-                out.printf("Position : %s\n", annotation.getBoundingPoly());
-                out.printf("Text: %s\n", annotation.getDescription());
+            if (res.getTextAnnotationsList().size() < 1) {
+                merchantName = "Receipt Title Not Found - Try Again";
+                amount = new BigDecimal(0);
+            } else {
+
+                for (String annotation : res.getTextAnnotationsList().get(0).getDescription().split("\n")) {
+                    System.out.println("\nNew Line : ");
+                    System.out.println(annotation);
+
+                    // Top-most non-decimal text is the merchant
+                    if (!(annotation.isEmpty()) && merchantName == null) {
+                        merchantName = annotation;
+                    }
+
+                    // bottom-most decimal text is the total amount
+                    if (!(annotation.isEmpty())) {
+                        Matcher matcher = regex.matcher(annotation);
+                        while (matcher.find()) {
+                            System.out.println(matcher.group(1));
+                            amount = new BigDecimal(matcher.group(1));
+                        }
+                    }
+                }
             }
 
             //TextAnnotation fullTextAnnotation = res.getFullTextAnnotation();
